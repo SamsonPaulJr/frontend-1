@@ -28,6 +28,28 @@ const consentManagement = {
     allowAuctionWithoutConsent: true,
 };
 
+const s2sConfig = {
+    accountId: '1',
+    enabled: true,
+    bidders: [
+        'appnexus',
+        'openx', // Defined in the doc.
+        // unknown to the ozone project (400): 'ix',
+        // unknown to the ozone project (400): 'improvedigital',
+        // unknown to ozone project (400): 'ix',
+        // unknown to ozone project (400): 'sonobi',
+        // unkown  to ozone project (400): 'trustx',
+    ],
+    // ^^ All known to us bidders
+    timeout: 1000,
+    adapter: 'prebidServer',
+    is_debug: 'true',
+    endpoint: 'http://elb.the-ozone-project.com/openrtb2/auction',
+    syncEndpoint: 'https://prebid.adnxs.com/pbs/v1/cookie_sync',
+    cookieSet: true,
+    cookiesetUrl: 'https://acdn.adnxs.com/cookieset/cs.js',
+};
+
 class PrebidAdUnit {
     code: ?string;
     bids: ?(PrebidBid[]);
@@ -54,18 +76,22 @@ class PrebidAdUnit {
 
 class PrebidService {
     static initialise(): void {
+        let pbjsConfig = {
+            bidderTimeout,
+            priceGranularity,
+        };
+
+        // Build the pbjsConfig from switches.
         if (config.switches.enableConsentManagementService) {
-            window.pbjs.setConfig({
-                bidderTimeout,
-                priceGranularity,
-                consentManagement,
-            });
-        } else {
-            window.pbjs.setConfig({
-                bidderTimeout,
-                priceGranularity,
-            });
+            pbjsConfig = Object.assign({}, { consentManagement }, pbjsConfig);
         }
+
+        if (true) {
+            // config.switches.prebidServerToServer){
+            pbjsConfig = Object.assign({}, { s2sConfig }, pbjsConfig);
+        }
+
+        window.pbjs.setConfig(pbjsConfig);
 
         // gather analytics from 1% of pageviews
         const inSample = getRandomIntInclusive(1, 100) === 1;
@@ -84,6 +110,8 @@ class PrebidService {
             ]);
         }
 
+        // This creates an 'unsealed' object. Flows
+        // allows dynamic assignment.
         window.pbjs.bidderSettings = {};
 
         if (config.switches.prebidSonobi) {
