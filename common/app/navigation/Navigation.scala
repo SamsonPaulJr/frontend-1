@@ -170,7 +170,12 @@ object NavMenu {
       val childrenToShow = if (currentNavHasChildren) currentNavLink else currentParent
       val children = childrenToShow.map(navLink => navLink.children).getOrElse(Nil)
 
-      Subnav(parent, children)
+      // TODO remove after world cup as a bit of a hack
+      if (page.metadata.url == "/football/world-cup-2018") {
+        Subnav(Some(worldCup2018), worldCup2018.children)
+      } else {
+        Subnav(parent, children)
+      }
     }
 
     page.metadata.customSignPosting.map(getCustomSignPosting).getOrElse(subnav)
